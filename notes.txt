@@ -1,0 +1,14 @@
+--- Create venv (virtual environment) ---
+WIN py/python -m venv venv (Note: We can either write py or python, but not both.)
+MacOs python3 -m venv venv (Write this in the terminal if you're using a Mac computer.)
+
+--- Activate the venv ---
+WIN venv\Script\activate
+MacOs source venv/bin/activate
+
+--- Install Flask ---
+pip install Flask
+
+---Run App ---
+WIN python server.py
+MacOs python3 server.py
