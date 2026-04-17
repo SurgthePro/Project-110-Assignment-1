@@ -1,6 +1,6 @@
 from flask import Flask # This format/syntax is different from ReactJS.
 from flask import jsonify
-from flask import request # This is needed in order to use the POST method.
+from flask import request # This is needed in order to use the POST method--it's a method from Flask.
 import uuid 
 from flask_cors import CORS
 
@@ -22,7 +22,7 @@ def get_students_65():
 # Note: After running this on the cp terminal, then we click on ThunderClient, then click on New Request, then on the URL window there, we choose the method on the left and insert the URL path on the right of the method, then press "Send."
 
 # ----- Path Parameters in Flask----- (They work similar to how a filter method works in React)
-@app.route("/greet/<string:name>", methods=["GET"]) # Here, "/greet/" is the path.  Path parameters are wrapped in angle brackets (note: white spaces should be avoided).  String is the type & name is the parameter name. Note: The data type by default is a string--this means that you actually don't need to specify a string type, but you do for all other data types. Nevertheless, it's good practice to specify the data type so that inexperienced developers can understand your code.
+@app.route("/greet/<string:name>", methods=["GET"]) # Here, "/greet/" is the path.  Path parameters are wrapped in angle brackets (note: white spaces should be avoided).  String is the type & name is the parameter name. Note: The data type by default is a string--this means that you actually don't need to specify a string type, but you do for all other data types. Nevertheless, it's good practice to specify the data type so that inexperienced developers can understand your code.  The data type is what you're entering as a parameter and also the data type you want to be returned.
 def say_hi(name): # The path parameter name also goes here always.
     return jsonify({"message": f"Hello {name}"}), 200 # ok (f is a python method--not a flask method)
 # Note: After running this on the cp terminal, then we click on ThunderClient, then click on New Request, then on the URL window there, we choose the method on the left and insert the URL path on the right of the method (http://127.0.0.1:5000/greet/somenameorstringtitle), then press "Send."
@@ -55,6 +55,8 @@ products = [
     "image": "https://picsum.photos/seed/3/300/300"
   },
 ]
+product_id_counter = 3 # The length of the products list.
+
 # The following is an endpoint for the products list above:
 # GET URL path: http//127.0.0.1:5000/api/products
 @app.route("/api/products", methods=["GET"])
@@ -93,10 +95,11 @@ def create_product():
     print(f"new product: {request.get_json()}") # Here, we are using the request method to have access to get_json(), this is the way to get JSON formatting from the request. ThunderClient will be sending the new product info. We are using python f-string (which is like template string--string interpolation).
     # We need to push the new product to our already existing list:
     new_product = request.get_json() # Here, whatever we are requesting, we are assigning it to a variable.
-    
-    # new_product["_id"] = len(products) + 1 # Note: This automatically creates a product _id for the new product (the user will not do this to avoid issues with multiple products with the same id, which would not be unique).
-    new_product["_id"] = uuid.uuid4()
-    products.append(new_product) # This is how we add a new product to the products list.
+    # new_product["_id"] = len(products) + 1 # Note: This automatically creates a new product _id property and VALUE (the value is created on the right side fo the equation, and the new property (which is not included in the ThunderClient window for the data being POSTed) is added on the left side) for the new product (the user will not do this to avoid issues with multiple products with the same id, which would not be unique). Note: The logic on the right was created first, then it was assigned to a normal variable (with a property that is not included with the data being POSTED) The new_product is the variable_name for the entire object/dictionary being created in ThunderClient API POST request. This code has been replaced by a better option on the following line.
+    new_product["_id"] = product_id_counter + 1 # This prevents the new product added from having the same id integer as another product.  
+    product_id_counter +1
+    # new_product["_id"] = uuid.uuid4() # uuid stands for (represents) hexadecimal numbers -4-4-8. This is a very long combination of strings, integers, and symbols. This can be used instead of the code directly above this code.
+    products.append(new_product) # This is how we add/push a new product to the products list.
     return jsonify({
         "success": True,
         "message": "Product added successfully!",
@@ -105,14 +108,19 @@ def create_product():
 
 
 # Put Method
-@app.route("/api/products/<int:product_id>", methods=["PUT"])
+# Basic Structure of the endpoint:
+# @app.route("/api/products/<int:product_id>", methods=["PUT"])
+# def update_product_by_id(product_id):
+# logic of function
+# return "Working on it"
+@app.route("/api/products/<int:product_id>", methods=["PUT"]) # Note: With this method, in the request (with ThunderClient) we don't send the id to be updated/modified. Note: The path always begins with a forward slash inside the quotes.  
 def update_product_by_id(product_id):
-    updated_product = request.get_json()
-    print(updated_product)
-    for product in products:
-        if product["_id"] == product_id:
-            product["title"] = updated_product["title"]
-            product["price"] = updated_product["price"]
+    updated_product = request.get_json() # The request method is the way we get the updated data from the API.  We get it in json format by using the method get_json()
+    print(updated_product) # This displays the updated data in the cp terminal.
+    for product in products: # If we have a thousdand products, this process will take a long time to complete, so before the for-loop, we need to have validation (are we getting those dictiionary properties?  If so, use the for-loop. If not, don't use the for-loop.)
+        if product["_id"] == product_id: # If it finds the product you specified by id integer, the following intended code will be executed.
+            product["title"] = updated_product["title"] # This tells the system that we want to override the current value to whatever we send it.
+            product["price"] = updated_product["price"] # If you only want to change the price of the product, only include this line of code and omit the other lines.
             product["category"] = updated_product["category"]
             product["image"] = updated_product["image"]
             return jsonify({
@@ -125,22 +133,25 @@ def update_product_by_id(product_id):
         "message": "Product not found."
         }), 404 # Not Found
 
-# Delete Method
+# Delete Method Endpoint -- Use the following to create the skeleton for the endpoint:
 # DELETE http://127.0.0.1:5000/api/products/
+# def delete_product_by_id()
+# return "working on it"
 @app.route("/api/products/<int:product_id>", methods=["DELETE"])
 def delete_product_by_id(product_id):
-    for product in products:
-        if product["_id"] == product_id:
-            products.remove(product) # delete product from products
-    #return "Working on it."
+    for product in products: # Here, we use a python for-loop to search thru every element in the python products list.
+        if product["_id"] == product_id: # Here, we use a conditional boolean statement so that if a product id value is equal to (matches) the id value input in the URL path (a path parameter), the following code instructions will be executed.
+            products.remove(product) # delete product with that _id value from products & executute return function.
+        # id_counter = product_id # This stores the id integer of the deleted product, so that when and if another product is added, it will be assigned a different id integer. Note: This code does not work bc the variable cannot be accessed globally by the create_product() function.
+          #  return "I'm just before the return statement."
             return jsonify({
-                "success": True,
-                "message": "Product deleted successfully!"
-            }), 200 # OK
+            "success": True,
+            "message": (f"Product {product_id} deleted successfully!")
+            }), 204 # No Content found anymore.
         
         return jsonify({
             "success": False,
-            "message": "Product not found."
+            "message": (f"Product {product_id} not found.")
         }), 404 # Not Found
 
 # -----  Coupons  -----
@@ -149,6 +160,8 @@ coupons = [
     {"_id": 2,"code": "SPOOKY25","discount": 25},
     {"_id": 3,"code": "VIP50","discount": 50}
 ] 
+coupon_id_counter = 3
+
 # GET  /api/coupons:
 # GET URL path: http//127.0.0.1:5000/api/coupons
 @app.route("/api/coupons", methods=["GET"])
@@ -160,11 +173,13 @@ def get_coupons():
 def get_coupons_count():
     return ({"coupons_counter":len(coupons)})
 
-# POST /api/coupons (The following endpoint add a new coupon to the coupons list:)
+# POST /api/coupons (The following endpoint adds a new coupon to the coupons list (however, this posted coupon will not be saved anywhere bc there's no database--we are not using a database yet in this course. Whenever you stop the program in the terminal--server, all memeory of the post is lost.):)
 @app.route("/api/coupons", methods=["POST"])
 def create_coupon():
     print(f"new coupon: {request.get_json()}")
     new_coupon = request.get_json()
+    new_coupon["_id"] = coupon_id_counter + 1
+    coupon_id_counter +1
     coupons.append(new_coupon)
     return jsonify({
         "success": True,
@@ -177,7 +192,7 @@ def create_coupon():
 def get_coupon_by_id(coupon_id):
     for coupon in coupons:
         print(coupon["_id"])
-        if coupon["_id"] == coupon_id:
+        if coupon["_id"] == coupon_id: # If coupon id from the list is the same as the coupon passed as the argument, then return it.
             return jsonify({
               "success": True,
               "message": "Coupon retrieved successfully!",
@@ -187,6 +202,46 @@ def get_coupon_by_id(coupon_id):
     return jsonify ({
         "success": False,
         "message": "Coupon not found."
+        }), 404 # Not Found
+
+#  PUT /api/coupons/<int: id>
+@app.route("/api/coupons/<int:coupon_id>", methods=["PUT"]) # Note: With this method, in the request (with ThunderClient) we don't send the id to be updated/modified. Note: The path always begins with a forward slash inside the quotes.  
+def update_coupon_by_id(coupon_id):
+    updated_coupon = request.get_json() # The request method is the way we get the updated data from the API.  We get it in json format by using the method get_json()
+    print(updated_coupon) # This displays the updated data in the cp terminal.
+    for coupon in coupons: # If we have a thousdand products, this process will take a long time to complete, so before the for-loop, we need to have validation (are we getting those dictiionary properties?  If so, use the for-loop. If not, don't use the for-loop.)
+        if coupon["_id"] == coupon_id: # If it finds the product you specified by id integer, the following intended code will be executed.
+            coupon["code"] = updated_coupon["code"] # This tells the system that we want to override the current value to whatever we send it.
+            coupon["discount"] = updated_coupon["discount"] # If you only want to change the price of the product, only include this line of code and omit the other lines.
+            return jsonify({
+                "success": True,
+                "message": "Coupon updated successfully!",
+                "data": coupon
+            }), 200 # OK
+    return jsonify({
+        "success": False,
+        "message": "Coupon not found."
+        }), 404 # Not Found
+
+# Delete Method Endpoint -- Use the following to create the skeleton for the endpoint:
+# DELETE http://127.0.0.1:5000/api/coupons/
+# def delete_coupon_by_id()
+# return "working on it"
+@app.route("/api/coupons/<int:coupon_id>", methods=["DELETE"])
+def delete_coupon_by_id(coupon_id):
+    for coupon in coupons: # Here, we use a python for-loop to search thru every element in the python products list.
+        if coupon["_id"] == coupon_id: # Here, we use a conditional boolean statement so that if a product id value is equal to (matches) the id value input in the URL path (a path parameter), the following code instructions will be executed.
+            coupons.remove(coupon) # delete product with that _id value from products & executute return function.
+        # id_counter = product_id # This stores the id integer of the deleted product, so that when and if another product is added, it will be assigned a different id integer. Note: This code does not work bc the variable cannot be accessed globally by the create_product() function.
+          #  return "I'm just before the return statement."
+            return jsonify({
+            "success": True,
+            "message": f"Product {coupon_id} deleted successfully!"
+            }), 204 # No Content found anymore.
+        
+        return jsonify({
+            "success": False,
+            "message": f"Product {coupon_id} not found."
         }), 404 # Not Found
 
 
